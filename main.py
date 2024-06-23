@@ -1,24 +1,26 @@
 import cv2
 import mediapipe as mp
 import pyautogui
-import numpy as np
 
 # Initialize video capture
 cap = cv2.VideoCapture(0)
-hand_detector = mp.solutions.hands.Hands()
+hand_detector = mp.solutions.hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
 drawing_utils = mp.solutions.drawing_utils
 screen_width, screen_height = pyautogui.size()
 index_y = 0
 
 # Smoothing variables
 prev_x, prev_y = 0, 0
-smooth_factor = 0.2
+smooth_factor = 0.5
 
 while True:
     _, frame = cap.read()
     frame = cv2.flip(frame, 1)  # Flip the frame horizontally
     frame_height, frame_width, _ = frame.shape
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Reduce the frame resolution for faster processing
+    frame_small = cv2.resize(frame, (frame_width // 2, frame_height // 2))
+    rgb_frame = cv2.cvtColor(frame_small, cv2.COLOR_BGR2RGB)
     output = hand_detector.process(rgb_frame)
     hands = output.multi_hand_landmarks
     if hands:
@@ -47,7 +49,7 @@ while True:
                     print('outside', abs(index_y - thumb_y))
                     if abs(index_y - thumb_y) < 20:  # Click condition
                         pyautogui.click()
-                        pyautogui.sleep(1)
+                        pyautogui.sleep(0.1)  # Reduced sleep duration for better responsiveness
 
     cv2.imshow('Virtual Mouse', frame)
 
